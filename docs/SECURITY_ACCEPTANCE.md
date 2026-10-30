@@ -35,9 +35,22 @@
 | RH closure | New source-specific independent inequality, correct quantifiers and full governed proof checks | Currently OPEN |
 
 The root light GitHub Actions workflow never executes downloaded mathematical
-code. The heavy workflow is **manual-only**, runs with `contents:read` and
-`persist-credentials:false`, and uploads source-bound diagnostics on failure.
-An independent self-hosted or large runner may be necessary for full OAI build.
+code. After the initial diagnostic OAI run, the heavy workflow is
+**manual-dispatch-only** to avoid rerunning the expensive source compilation
+on every infrastructure commit. It runs with
+`contents:read` and `persist-credentials:false` and uploads source-bound
+native logs, exact-source receipts and diagnostics on both success and failure.
+The bootstrap-only `leanprover/lean-action` step points to the pinned original
+OAI manifest before the unified Lake manifest exists; it does not compile code
+or download the Mathlib cache itself. `build.sh` owns dependency resolution and
+compile commands after the toolchain is installed. All source runners remain
+without repository-write credentials. A larger runner may be needed for full OAI.
+
+A gate receipt in `.bridge/gates/<stage>.json` is emitted **only after** its
+native commands succeed and a resolved manifest with the exact pinned Mathlib
+revision is available. It records source SHA, compiler, Lake and dependency
+fingerprints; it is not a substitute for independently replayed comparator or
+for the source-specific OPICA terminal proof acceptance.
 
 ## Reproducibility receipts
 

@@ -1,11 +1,7 @@
 name: Full bridge build (explicit dispatch; source-aware)
 on:
-  # First deployment to main runs the pinned OAI nonvanishing gate.
-  # Every other native stage remains an explicit manual action.
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/integration-manual.yml'
+  # Deliberately manual: OAI's full pinned dependency closure is extremely expensive.
+  # First diagnostic native run was already dispatched by the previous bootstrap.
   workflow_dispatch:
     inputs:
       stage:
@@ -37,8 +33,9 @@ jobs:
           python3 scripts/verify_lock.py
           python3 scripts/prepare_workspace.py
       - name: Bootstrap Lean toolchain from pinned OAI package
-        # The generated bridge manifest does not exist until the first lake update.
-        # The pinned OAI checkout contains its original manifest; only install elan here.
+        # lean-action config needs a Lake manifest before bridge's first lake update.
+        # The pinned OAI vendor checkout includes one; the generated bridge does not.
+        # Disable all action-managed builds and caches: scripts/build.sh owns these.
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: .bridge/vendor/oai/lean
@@ -62,5 +59,7 @@ jobs:
             .bridge/prepare-evidence.json
             .bridge/provenance-report.json
             .bridge/axiom-audit.log
+            .bridge/logs/*.log
+            .bridge/gates/*.json
           if-no-files-found: warn
           retention-days: 30

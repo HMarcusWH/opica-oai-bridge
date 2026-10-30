@@ -70,3 +70,17 @@ The bridge's original scaffold is Apache-2.0. Imported Git checkouts keep their
 original licenses and attribution. OpenAI mathematics is Apache-2.0 licensed;
 verify and preserve each transitive dependency's license independently.
 See [NOTICE.md](NOTICE.md).
+
+## Native build receipts and diagnostic artifacts
+
+`make oai`, `make zeta`, `make smoke`, `make axioms`, and `make all` stream their
+actual Lake logs into `.bridge/logs/<stage>.log`. **Only after each gate succeeds**
+will a `.bridge/gates/<stage>.json` receipt be produced with observed Lean/Lake
+versions, original source heads, and the checked Mathlib manifest SHA. The
+native CI workflow uploads these records even when a command fails.
+
+The initial OAI-only diagnostic run was triggered by the bootstrap workflow edit.
+All subsequent expensive native stages are explicitly manually dispatched to
+avoid multiplying full dependency checkouts on infrastructure-only commits.
+No successful preflight or native build receipt upgrades the OPEN RH/Step 4
+mathematical status.
