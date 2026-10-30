@@ -1,0 +1,31 @@
+name: Bridge preflight (no untrusted dependency execution)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bridge-preflight-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Source pin safety
+        run: python3 scripts/verify_lock.py
+      - name: Static tests and adversarial failures
+        run: python3 -m unittest discover -s tests -v
+      - name: Python syntax and basic shell parsing
+        run: |
+          python3 -m compileall -q scripts tests
+          bash -n scripts/build.sh scripts/verify_comparator.sh
+      - name: Confirm no automatic complete-mathematics acceptance
+        run: |
+          test ! -e lake-manifest.json || echo 'Manifest exists: independent verification remains required'
+          grep -q 'BOOTSTRAP_ONLY_NOT_COMBINED_ACCEPTANCE' source-lock.json
