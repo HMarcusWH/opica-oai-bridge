@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: 'oai, zeta, smoke, axioms, full'
+        description: 'oai, zeta, smoke, zero, axioms, full'
         type: choice
         required: true
         default: oai
@@ -13,6 +13,7 @@ on:
           - oai
           - zeta
           - smoke
+          - zero
           - axioms
           - full
 permissions:
@@ -59,6 +60,7 @@ jobs:
             .bridge/prepare-evidence.json
             .bridge/provenance-report.json
             .bridge/axiom-audit.log
+            .bridge/zero-axiom-audit.log
             .bridge/logs/*.log
             .bridge/gates/*.json
           if-no-files-found: warn

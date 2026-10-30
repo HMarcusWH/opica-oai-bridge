@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mode="${1:-smoke}"
-case "$mode" in oai|zeta|smoke|full|axioms) ;; *) echo "Unknown build mode $mode" >&2; exit 2;; esac
+case "$mode" in oai|zeta|smoke|zero|full|axioms) ;; *) echo "Unknown build mode $mode" >&2; exit 2;; esac
 mkdir -p .bridge/logs .bridge/gates
 log=".bridge/logs/${mode}.log"
 : > "$log"
@@ -29,6 +29,11 @@ case "$mode" in
     run_logged lake build +OAI.NumberTheory.DirichletL.Nonvanishing
     run_logged lake build +Zeta23.OPICARound4.PrimeDiscrepancyIntegral
     run_logged lake build +OPICAOAI.Smoke
+    ;;
+  zero)
+    run_logged lake build +OPICAOAI.ZeroDisplacementBridge
+    lake env lean OPICAOAI/ZeroDisplacementBridge.lean 2>&1 | tee .bridge/zero-axiom-audit.log | tee -a "$log"
+    run_logged python3 scripts/check_axioms.py .bridge/zero-axiom-audit.log zero
     ;;
   full)
     run_logged lake build OAI

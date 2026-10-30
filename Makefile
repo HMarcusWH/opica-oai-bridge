@@ -1,4 +1,4 @@
-.PHONY: preflight test prepare bootstrap oai zeta smoke all axioms comparator provenance clean-generated
+.PHONY: preflight test prepare bootstrap oai zeta smoke zero all axioms comparator provenance clean-generated
 
 preflight:
 	python3 scripts/verify_lock.py
@@ -20,6 +20,9 @@ zeta:
 
 smoke:
 	bash scripts/build.sh smoke
+
+zero:
+	bash scripts/build.sh zero
 
 all:
 	bash scripts/build.sh full

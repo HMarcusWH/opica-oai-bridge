@@ -16,7 +16,7 @@ from pathlib import Path
 from verify_lock import ROOT, read_and_validate
 from prepare_workspace import VENDOR_DIRS, assert_git_checkout
 
-VALID_STAGES = {"oai", "zeta", "smoke", "axioms", "full"}
+VALID_STAGES = {"oai", "zeta", "smoke", "zero", "axioms", "full"}
 
 
 def sha256(path: Path) -> str:
