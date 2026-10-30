@@ -1,0 +1,14 @@
+{
+  "schema": "OPICA_OAI_BUILD_MILESTONES_V1",
+  "status": "BOOTSTRAP_IN_PROGRESS",
+  "milestones": [
+    {"id":"M0", "requires":[], "target":"Source locks, local composer and adversarial static tests", "acceptance":"Local Python tests pass", "status":"LOCAL_SOURCE_PREPARED"},
+    {"id":"M1", "requires":["M0"], "target":"Pinned OAI source, patches and complete nonvanishing theorem", "acceptance":"OAI native target and upstream comparator pass", "status":"OPEN"},
+    {"id":"M2", "requires":["M0"], "target":"Zeta23 Lean4.34 compatibility overlay preserving proof types", "acceptance":"Zeta23 Round4 native target, comparator/type-and-axiom sweeps pass", "status":"OPEN"},
+    {"id":"M3", "requires":["M1","M2"], "target":"One actual combined Lean import", "acceptance":"OPICAOAI.Smoke compiles and #print axioms passes", "status":"OPEN"},
+    {"id":"M4", "requires":["M3"], "target":"Full package build and pinned manifest", "acceptance":"Full OAI+Zeta23 build, manifest and failure controls", "status":"OPEN"},
+    {"id":"M5", "requires":["M3"], "target":"ZeroConfig/Theta/Chebyshev bridges", "acceptance":"Independent Lean proofs with exact definitions", "status":"OPEN"},
+    {"id":"M6", "requires":["M3"], "target":"Native Mobius echo and common signal", "acceptance":"Exact source Laplace and continuation proof with no borrowed closure", "status":"OPEN"},
+    {"id":"M7", "requires":["M4","M5","M6"], "target":"OPICA Step4 source-specific estimate research", "acceptance":"No terminal claim until a genuinely independent closing estimate compiles and passes governed verification", "status":"OPEN"}
+  ]
+}

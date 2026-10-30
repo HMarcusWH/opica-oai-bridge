@@ -1,0 +1,19 @@
+{
+  "schema": "OPICA_OAI_BRIDGE_OPEN_OBLIGATIONS_V1",
+  "claim_boundary": "Research targets are not declared as Lean axioms, theorem facts, or acceptance receipts.",
+  "RH": "OPEN",
+  "Step4": "OPEN",
+  "obligations": [
+    {"id": "BUILD_OAI", "status": "UNVERIFIED", "target": "Complete pinned OAI 7/8 theorem imports and comparator replays on the unified toolchain"},
+    {"id": "BUILD_ZETA", "status": "UNVERIFIED", "target": "Original pinned Zeta23 / PR298 sources compile with unchanged theorem types and permitted axioms"},
+    {"id": "BUILD_CROSS", "status": "UNVERIFIED", "target": "One Lean consumer imports genuine theorems from both source trees"},
+    {"id": "ZERO_CONFIGURATION_BRIDGE", "status": "OPEN", "target": "The exact OPICA zetaZeroConfig carrier agrees with the Mathlib riemannZeta domain used by OAI"},
+    {"id": "THETA_BOUND", "status": "OPEN", "target": "Derive Theta <= 3/8 from OAI 7/8, reflection symmetry and the actual native zero-displacement supremum"},
+    {"id": "CHEBYSHEV", "status": "OPEN", "target": "Prove psi(x)-x = O_eps(x^(7/8+eps)) in the required Lean definition and connect it to the exact all-prime-power Abel identity"},
+    {"id": "COMMON_SIGNAL", "status": "OPEN", "target": "Port/generalize the common-signal continuation lemma with all analytic, integrability and nonvanishing hypotheses"},
+    {"id": "MOBIUS_ECHO", "status": "OPEN", "target": "Define the literal native causal target echo and prove its Laplace identity in the original absolute-convergence region"},
+    {"id": "C_DIRECT", "status": "OPEN", "target": "Independent lower Weil energy estimate on the very same generated late smooth trial; exponent epsilon below beta"},
+    {"id": "C_SMOOTH_SCHUR", "status": "OPEN", "target": "Independent complete smooth Schur upper on the original inverse and all arithmetic channels"},
+    {"id": "CAUSAL_SAVING", "status": "OPEN", "target": "Uniform native Möbius echo growth saving independent of an off-critical zero assumption"}
+  ]
+}

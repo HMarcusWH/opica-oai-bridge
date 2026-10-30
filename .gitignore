@@ -1,0 +1,16 @@
+# Generated composition state; sources are pinned Git checkouts, not committed copies.
+.bridge/
+.lake/
+lakefile.lean
+OAI
+OAI.lean
+Zeta23
+Zeta23.lean
+ComparatorChallenges
+patches
+*.trace
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+# NOTE: lake-manifest.json is INTENTIONALLY trackable after a successful lock/replay.

@@ -1,0 +1,28 @@
+{
+  "schema": "OPICA_OAI_SOURCE_LOCK_V1",
+  "status": "BOOTSTRAP_ONLY_NOT_COMBINED_ACCEPTANCE",
+  "lean_toolchain": "leanprover/lean4:v4.34.1",
+  "workspace_mathlib": "d13f23b723b8a846827a245b89c10fc7d3f11612",
+  "oai": {
+    "repo": "https://github.com/HMarcusWH/math.git",
+    "upstream": "https://github.com/openai/math",
+    "commit": "4eaee87548250b2682affda7d05d947c05554bae",
+    "lakefile_blob": "cd24ca2ee09fb6fe33e82400534d9e60a616125b",
+    "subdir": "lean",
+    "theorem": "OAI.riemannZeta_ne_zero_of_seven_eighths_lt_re"
+  },
+  "zeta23": {
+    "repo": "https://github.com/HMarcusWH/zeta-23-lean.git",
+    "commit": "ebbd787202ce2c67518946fc642af12ff009eaa6",
+    "lakefile_blob": "a0b94fc92bf5bd94cbdcedab56a3673b399f1a29",
+    "source_pr": 298,
+    "compatibility": "OPEN: source pin uses Lean 4.33.0-rc2; unified workspace uses Lean 4.34.1"
+  },
+  "import_gates": [
+    "OAI.NumberTheory.DirichletL.Nonvanishing",
+    "OAI.NumberTheory.DirichletL.Continuation",
+    "Zeta23.OPICARound4.PrimeDiscrepancyIntegral",
+    "OPICAOAI.Smoke"
+  ],
+  "allowed_proof_axioms": ["propext", "Quot.sound", "Classical.choice"]
+}
