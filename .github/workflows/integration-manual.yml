@@ -36,10 +36,15 @@ jobs:
         run: |
           python3 scripts/verify_lock.py
           python3 scripts/prepare_workspace.py
-      - name: Install Lean toolchain and fetch cache without automatic large build
+      - name: Bootstrap Lean toolchain from pinned OAI package
+        # The generated bridge manifest does not exist until the first lake update.
+        # The pinned OAI checkout contains its original manifest; only install elan here.
         uses: leanprover/lean-action@v1
         with:
+          lake-package-directory: .bridge/vendor/oai/lean
           auto-config: false
+          use-github-cache: false
+          use-mathlib-cache: false
           build: false
           test: false
           lint: false
