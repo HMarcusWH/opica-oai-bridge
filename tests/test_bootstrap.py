@@ -219,6 +219,43 @@ class AxiomTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check("some unrelated output")
 
+    def test_independent_source_theorem_audit(self):
+        from check_axioms import ALL_THEOREMS
+        self.assertEqual(len(ALL_THEOREMS), 3)
+        log = "\\n".join(
+            f"'{name}' depends on axioms: [propext, Classical.choice, Quot.sound]"
+            for name in ALL_THEOREMS
+        ).replace("\\n", "\n")
+        check(log, all_sources=True)
+        # A wrapper alone must NOT be mistaken for independently audited sources.
+        with self.assertRaises(ValueError):
+            check(log.splitlines()[-1], all_sources=True)
+        with self.assertRaises(ValueError):
+            check(log + "\n" + log.splitlines()[0], all_sources=True)
+        with self.assertRaises(ValueError):
+            check(log.replace("Quot.sound", "sorryAx"), all_sources=True)
+        with self.assertRaises(ValueError):
+            check(log.replace("Classical.choice", "new_untrusted_axiom"), all_sources=True)
+        # The Lean kernel can also report declarations with no axiom dependencies.
+        no_axioms = log.replace(
+            "'OAI.riemannZeta_ne_zero_of_seven_eighths_lt_re' depends on axioms: "
+            "[propext, Classical.choice, Quot.sound]",
+            "'OAI.riemannZeta_ne_zero_of_seven_eighths_lt_re' does not depend on any axioms",
+        )
+        check(no_axioms, all_sources=True)
+
+    def test_axiom_gate_uses_all_sources_and_drops_stale_receipt(self):
+        script = (ROOT / "scripts/build.sh").read_text(encoding="utf-8")
+        self.assertIn("--all-sources", script)
+        self.assertIn('rm -f ".bridge/gates/${mode}.json"', script)
+        lean_file = (ROOT / "OPICAOAI/PrintAxioms.lean").read_text()
+        for theorem in (
+            "OAI.riemannZeta_ne_zero_of_seven_eighths_lt_re",
+            "Zeta23.OPICARound4.prime_log_abel",
+            "OPICAOAI.riemannZeta_ne_zero_above_seven_eighths",
+        ):
+            self.assertIn(f"#print axioms {theorem}", lean_file)
+
 
 if __name__ == "__main__":
     unittest.main()
