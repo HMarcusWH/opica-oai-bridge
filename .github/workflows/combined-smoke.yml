@@ -1,0 +1,69 @@
+name: M3 Combined OAI-Zeta23 import and axiom check
+on:
+  # One genuine combined build after a successful pinned M2 native diagnostic.
+  workflow_run:
+    workflows: ["M2 Zeta23 Lean 4.34 compatibility diagnostic"]
+    types: [completed]
+    branches: [main]
+  # Explicit replay on a source-locked current main commit is also permitted.
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: full-bridge-build
+  cancel-in-progress: false
+jobs:
+  combined-import:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify pinned OAI and Zeta23 sources and compose workspace
+        run: |
+          python3 scripts/verify_lock.py
+          python3 scripts/prepare_workspace.py
+      - name: Install the common Lean 4.34.1 toolchain from pinned OAI
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: .bridge/vendor/oai/lean
+          auto-config: false
+          use-github-cache: false
+          use-mathlib-cache: false
+          build: false
+          test: false
+          lint: false
+      - name: Resolve exact dependency graph and verify OAI patches
+        run: timeout --signal=TERM --kill-after=60s 6600 bash scripts/build.sh resolve
+      - name: Restore locked Mathlib cache
+        run: timeout --signal=TERM --kill-after=60s 1200 bash scripts/build.sh cache
+      - name: Build the original OAI and Zeta23 imports in one Lean kernel
+        env:
+          BRIDGE_PRE_RESOLVED: '1'
+        run: timeout --signal=TERM --kill-after=60s 10500 bash scripts/build.sh smoke
+      - name: Audit actual combined theorem proof axioms
+        env:
+          BRIDGE_PRE_RESOLVED: '1'
+        run: timeout --signal=TERM --kill-after=60s 900 bash scripts/build.sh axioms
+      - name: Emit source provenance even on failure
+        if: always()
+        run: python3 scripts/provenance_report.py || true
+      - name: Preserve M3 source, native, and axiom receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-m3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .bridge/prepare-evidence.json
+            .bridge/resolution-report.json
+            .bridge/provenance-report.json
+            .bridge/axiom-audit.log
+            .bridge/logs/*.log
+            .bridge/gates/*.json
+          if-no-files-found: warn
+          retention-days: 30
