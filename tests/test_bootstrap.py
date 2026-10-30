@@ -19,6 +19,7 @@ from prepare_workspace import (  # noqa: E402
 from verify_lock import read_and_validate, validate_lock  # noqa: E402
 from check_axioms import check  # noqa: E402
 from write_gate_receipt import validate_manifest, VALID_STAGES  # noqa: E402
+from verify_resolution import check_resolution  # noqa: E402
 
 MATHLIB = "d13f23b723b8a846827a245b89c10fc7d3f11612"
 FAKE_LAKE = f'''import Lake
@@ -78,6 +79,58 @@ class BuildReceiptTests(unittest.TestCase):
         self.assertIn(".bridge/gates/*.json", workflow)
         self.assertIn(".bridge/logs/*.log", workflow)
 
+
+class StagedResolutionTests(unittest.TestCase):
+    def test_ci_has_separate_resolution_cache_build_steps(self):
+        workflow = (ROOT / ".github/workflows/integration-manual.yml").read_text()
+        self.assertIn("scripts/build.sh resolve", workflow)
+        self.assertIn("scripts/build.sh cache", workflow)
+        self.assertIn("BRIDGE_PRE_RESOLVED: '1'", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn(".bridge/resolution-report.json", workflow)
+
+    def test_missing_manifest_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source-lock.json").write_bytes((ROOT / "source-lock.json").read_bytes())
+            (root / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
+            with self.assertRaises(FileNotFoundError):
+                check_resolution(root=root, verify_git=False)
+
+    def test_resolution_fingerprint_and_mathlib(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("source-lock.json", "lean-toolchain"):
+                (root / name).write_bytes((ROOT / name).read_bytes())
+            lake_path = root / "lakefile.lean"
+            lake_path.write_text("-- pinned generated lake config\n")
+            prep = root / ".bridge/prepare-evidence.json"
+            prep.parent.mkdir(parents=True)
+            lock = read_and_validate(root)
+            prep.write_text(json.dumps({
+                "schema": "OPICA_OAI_PREPARE_EVIDENCE_V1",
+                "oai_head": lock["oai"]["commit"],
+                "zeta23_head": lock["zeta23"]["commit"],
+                "mathlib_target": MATHLIB,
+                "generated_lake_sha256": hashlib.sha256(lake_path.read_bytes()).hexdigest(),
+            }))
+            manifest = root / "lake-manifest.json"
+            manifest.write_text(json.dumps({"packages": [
+                {"name": "mathlib", "type": "git", "rev": MATHLIB},
+                {"name": "another", "type": "git", "rev": "a" * 40},
+            ]}))
+            result = check_resolution(root=root, verify_git=False)
+            self.assertEqual(result["stage"], "DEPENDENCY_RESOLVED_NOT_COMPILED")
+            self.assertFalse(result["native_proof_compiled"])
+            lake_path.write_text("-- tampered\n")
+            with self.assertRaisesRegex(ValueError, "changed after preparation"):
+                check_resolution(root=root, verify_git=False)
+            lake_path.write_text("-- pinned generated lake config\n")
+            manifest.write_text(json.dumps({"packages": [
+                {"name": "mathlib", "type": "git", "rev": "b" * 40},
+            ]}))
+            with self.assertRaisesRegex(ValueError, "Mathlib"):
+                check_resolution(root=root, verify_git=False)
 
 class LockTests(unittest.TestCase):
     def test_unchanged_lock(self):

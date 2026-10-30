@@ -1,7 +1,11 @@
 name: Full bridge build (explicit dispatch; source-aware)
 on:
-  # Deliberately manual: OAI's full pinned dependency closure is extremely expensive.
-  # First diagnostic native run was already dispatched by the previous bootstrap.
+  # Trigger one diagnostic when this workflow file changes on main.
+  # Other source edits do not automatically launch expensive full builds.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/integration-manual.yml'
   workflow_dispatch:
     inputs:
       stage:
@@ -45,8 +49,14 @@ jobs:
           build: false
           test: false
           lint: false
-      - name: Run selected independent build gate
-        run: bash scripts/build.sh '${{ inputs.stage || 'oai' }}'
+      - name: Resolve original pinned dependency graph and compatibility patches
+        run: timeout --signal=TERM --kill-after=60s 7200 bash scripts/build.sh resolve
+      - name: Download Mathlib cache
+        run: timeout --signal=TERM --kill-after=60s 1500 bash scripts/build.sh cache
+      - name: Compile and independently record requested native gate
+        env:
+          BRIDGE_PRE_RESOLVED: '1'
+        run: timeout --signal=TERM --kill-after=60s 10200 bash scripts/build.sh '${{ inputs.stage || 'oai' }}'
       - name: Emit provenance even when previous gate fails
         if: always()
         run: python3 scripts/provenance_report.py || true
@@ -57,6 +67,7 @@ jobs:
           name: bridge-gate-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             .bridge/prepare-evidence.json
+            .bridge/resolution-report.json
             .bridge/provenance-report.json
             .bridge/axiom-audit.log
             .bridge/logs/*.log
