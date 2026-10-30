@@ -79,7 +79,8 @@ will a `.bridge/gates/<stage>.json` receipt be produced with observed Lean/Lake
 versions, original source heads, and the checked Mathlib manifest SHA. The
 native CI workflow uploads these records even when a command fails.
 
-The OAI-only gate is automatically queued when the heavy workflow itself changes
-on the `main` branch. Other expensive stages remain explicit manual workflows.
+The initial OAI-only diagnostic run was triggered by the bootstrap workflow edit.
+All subsequent expensive native stages are explicitly manually dispatched to
+avoid multiplying full dependency checkouts on infrastructure-only commits.
 No successful preflight or native build receipt upgrades the OPEN RH/Step 4
 mathematical status.

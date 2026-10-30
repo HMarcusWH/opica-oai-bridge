@@ -1,10 +1,7 @@
 name: Full bridge build (explicit dispatch; source-aware)
 on:
-  # Bootstrap deployment runs the first OAI proof gate. Other stages remain manual.
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/integration-manual.yml'
+  # Deliberately manual: OAI's full pinned dependency closure is extremely expensive.
+  # First diagnostic native run was already dispatched by the previous bootstrap.
   workflow_dispatch:
     inputs:
       stage:

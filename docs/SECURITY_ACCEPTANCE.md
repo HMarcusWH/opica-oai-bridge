@@ -35,8 +35,9 @@
 | RH closure | New source-specific independent inequality, correct quantifiers and full governed proof checks | Currently OPEN |
 
 The root light GitHub Actions workflow never executes downloaded mathematical
-code. The heavy workflow runs the **OAI-only native gate** when its own workflow
-file changes on `main`, and other stages are explicitly dispatched. It runs with
+code. After the initial diagnostic OAI run, the heavy workflow is
+**manual-dispatch-only** to avoid rerunning the expensive source compilation
+on every infrastructure commit. It runs with
 `contents:read` and `persist-credentials:false` and uploads source-bound
 native logs, exact-source receipts and diagnostics on both success and failure.
 The bootstrap-only `leanprover/lean-action` step points to the pinned original
