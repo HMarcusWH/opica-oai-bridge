@@ -5,6 +5,8 @@ cd "$(dirname "$0")/.."
 mode="${1:-smoke}"
 case "$mode" in resolve|cache|oai|zeta|smoke|full|axioms) ;; *) echo "Unknown build mode $mode" >&2; exit 2;; esac
 mkdir -p .bridge/logs .bridge/gates
+# A failed retry must never leave a previous successful-looking gate receipt.
+rm -f ".bridge/gates/${mode}.json"
 log=".bridge/logs/${mode}.log"
 : > "$log"
 run_logged() {
@@ -56,7 +58,7 @@ case "$mode" in
   axioms)
     run_logged lake build +OPICAOAI.Smoke
     lake env lean OPICAOAI/PrintAxioms.lean 2>&1 | tee .bridge/axiom-audit.log | tee -a "$log"
-    run_logged python3 scripts/check_axioms.py .bridge/axiom-audit.log
+    run_logged python3 scripts/check_axioms.py .bridge/axiom-audit.log --all-sources
     ;;
 esac
 run_logged python3 scripts/write_gate_receipt.py "$mode"
