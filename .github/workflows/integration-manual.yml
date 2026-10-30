@@ -1,5 +1,11 @@
 name: Full bridge build (explicit dispatch; source-aware)
 on:
+  # First deployment to main runs the pinned OAI nonvanishing gate.
+  # Every other native stage remains an explicit manual action.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/integration-manual.yml'
   workflow_dispatch:
     inputs:
       stage:
@@ -33,11 +39,12 @@ jobs:
       - name: Install Lean toolchain and fetch cache without automatic large build
         uses: leanprover/lean-action@v1
         with:
+          auto-config: false
           build: false
           test: false
           lint: false
       - name: Run selected independent build gate
-        run: bash scripts/build.sh '${{ inputs.stage }}'
+        run: bash scripts/build.sh '${{ inputs.stage || 'oai' }}'
       - name: Emit provenance even when previous gate fails
         if: always()
         run: python3 scripts/provenance_report.py || true
