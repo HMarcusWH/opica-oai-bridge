@@ -21,7 +21,7 @@ def check(log: str, stage: str = "smoke") -> None:
         raise ValueError("Failure, sorry or unsupported admission in kernel/axiom log")
     # Each exported declaration must occur exactly once; no missing or duplicate data.
     for theorem in TARGETS[stage]:
-        pattern = r"'" + re.escape(theorem) + r"' depends on axioms: \\[([^\\]]*)\\]"
+        pattern = r"'" + re.escape(theorem) + r"' depends on axioms: \[([^\]]*)\]"
         matches = re.findall(pattern, log)
         if len(matches) != 1:
             raise ValueError(f"Expected exactly one axiom declaration for {theorem}, found {len(matches)}")
