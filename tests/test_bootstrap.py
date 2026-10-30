@@ -17,7 +17,7 @@ from prepare_workspace import (  # noqa: E402
     REQUIRED_MARKERS, assert_git_checkout, prepare, render_lakefile
 )
 from verify_lock import read_and_validate, validate_lock  # noqa: E402
-from check_axioms import check  # noqa: E402
+from check_axioms import check, TARGETS  # noqa: E402
 from write_gate_receipt import validate_manifest, VALID_STAGES  # noqa: E402
 
 MATHLIB = "d13f23b723b8a846827a245b89c10fc7d3f11612"
@@ -70,7 +70,7 @@ class BuildReceiptTests(unittest.TestCase):
             validate_manifest({"packages": []}, rev)
 
     def test_stages_and_boot_order(self):
-        self.assertEqual(VALID_STAGES, {"oai", "zeta", "smoke", "axioms", "full"})
+        self.assertEqual(VALID_STAGES, {"oai", "zeta", "smoke", "zero", "axioms", "full"})
         workflow = (ROOT / ".github/workflows/integration-manual.yml").read_text()
         self.assertIn("lake-package-directory: .bridge/vendor/oai/lean", workflow)
         self.assertIn("use-github-cache: false", workflow)
@@ -165,6 +165,20 @@ class AxiomTests(unittest.TestCase):
     def test_missing_log_fails_closed(self):
         with self.assertRaises(ValueError):
             check("some unrelated output")
+
+    def test_zero_stage_exact_two_theorems(self):
+        self.assertEqual(len(TARGETS["zero"]), 2)
+        lines = "\\n".join(
+            f"'{name}' depends on axioms: [propext, Classical.choice, Quot.sound]"
+            for name in TARGETS["zero"]
+        )
+        check(lines, "zero")
+        with self.assertRaises(ValueError):
+            check(lines.splitlines()[0], "zero")
+        with self.assertRaises(ValueError):
+            check(lines + "\\n" + lines.splitlines()[0], "zero")
+        with self.assertRaises(ValueError):
+            check(lines.replace("propext", "sorryAx"), "zero")
 
 
 if __name__ == "__main__":

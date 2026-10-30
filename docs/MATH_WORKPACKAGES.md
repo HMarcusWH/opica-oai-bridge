@@ -129,3 +129,13 @@ OPICAOAI/Step4/Consumers.lean
 These are **work packages, not files with placeholder `sorry` proofs**. Add a
 module only when its definitions/hypotheses and proof obligations are finalized;
 keep open propositions in machine-readable research contracts, not as axioms.
+
+## M5 source-bound bridge candidate (pending native verification)
+
+Draft PR #3 adds `OPICAOAI/ZeroDisplacementBridge.lean` with the exact
+OAI 7/8 theorem on Zeta23's actual `zetaZeroConfig` and its named
+`nativeZeroDisplacementSup` scalar. It also consumes the genuine fixed-source
+terminal-window limit. `make zero` / manual `zero` CI stage builds and audits
+those new theorem declarations (after M1-M3). These sources are **UNACCEPTED**
+until the unified Lean build, exact types and permitted-axiom checks succeed;
+`C_DIRECT` and Step 4 remain OPEN. See `M5_ZERO_DISPLACEMENT_CANDIDATE.md`.
