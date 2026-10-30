@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mode="${1:-smoke}"
-case "$mode" in oai|zeta|smoke|full|axioms) ;; *) echo "Unknown build mode $mode" >&2; exit 2;; esac
+case "$mode" in resolve|cache|oai|zeta|smoke|full|axioms) ;; *) echo "Unknown build mode $mode" >&2; exit 2;; esac
 mkdir -p .bridge/logs .bridge/gates
 log=".bridge/logs/${mode}.log"
 : > "$log"
@@ -20,8 +20,26 @@ command -v lean >/dev/null || { echo 'Lean missing from PATH.' >&2; exit 1; }
 run_logged lean --version
 run_logged lake --version
 # OAI's Lake pre-resolution patch hooks must remain active. Keep our root toolchain.
-run_logged lake update --keep-toolchain
-run_logged lake exe cache get
+if [[ "$mode" == "resolve" ]]; then
+  run_logged lake update --keep-toolchain
+  run_logged python3 scripts/verify_resolution.py
+  exit 0
+fi
+if [[ "$mode" == "cache" ]]; then
+  run_logged python3 scripts/verify_resolution.py
+  run_logged lake exe cache get
+  exit 0
+fi
+if [[ "${BRIDGE_PRE_RESOLVED:-0}" == "1" ]]; then
+  run_logged python3 scripts/verify_resolution.py
+elif [[ "${BRIDGE_PRE_RESOLVED:-0}" == "0" ]]; then
+  run_logged lake update --keep-toolchain
+  run_logged python3 scripts/verify_resolution.py
+  run_logged lake exe cache get
+else
+  echo 'BRIDGE_PRE_RESOLVED must be 0 or 1' >&2
+  exit 2
+fi
 case "$mode" in
   oai) run_logged lake build +OAI.NumberTheory.DirichletL.Nonvanishing ;;
   zeta) run_logged lake build +Zeta23.OPICARound4.PrimeDiscrepancyIntegral ;;
