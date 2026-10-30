@@ -161,9 +161,29 @@ source/theorem acceptance; an import of 7/8 cannot confer `RH_PROVED`.
 
 - Bootstrap main with README so the empty repo has a default branch.
 - Put all files on `bootstrap/source-composition` and open a **draft** PR.
-- Keep the draft until M0 source tests and review are done; do not merge on
-  paper-only correctness assertions.
+- Bootstrap PR #1 was merged after static preflight. **The combined Lean build
+  and mathematical acceptance were not claimed**, and the originally attempted
+  OAI gate failed because lean-action expected an as-yet-uncreated root manifest.
+- The corrected first-run toolchain bootstrap uses the pinned OAI vendor package
+  manifest and retains all separate native gates. Further compatibility fixes
+  must continue from actual compiler/CI evidence.
 - Work on independent M1, M2 compatibility branches; pin their exact inputs.
 - Promote the full bridge only after M3 and M4 checks are source-bound.
 - Do not modify original OAI or Zeta23 main, or touch Round 4's terminal
   acceptance infrastructure, through an incidental bridge build.
+
+## Native CI troubleshooting and receipts
+
+The initial OAI gate (run 41096871112) passed source checkout but failed during
+`leanprover/lean-action` configuration with `No lake-manifest.json found`; it
+never entered `scripts/build.sh`. The corrected workflow installs Lean via the
+original pinned OAI subpackage which already has a `lean/lake-manifest.json`.
+It does not invent a bridge manifest or run upstream mathematical code as part
+of the Lean installation step.
+
+When a native command fails, its full stdout/stderr is streamed to GitHub Actions
+and `.bridge/logs/<stage>.log`; if all required native commands pass, a source-
+and manifest-bound `.bridge/gates/<stage>.json` is created. Both are CI artifacts.
+A gate receipt means only that the declared commands returned success on the
+recorded checkout; it is not comparator verification, independent refereeing,
+or resolution of any Step 4 closing estimate.

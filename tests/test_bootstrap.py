@@ -18,6 +18,7 @@ from prepare_workspace import (  # noqa: E402
 )
 from verify_lock import read_and_validate, validate_lock  # noqa: E402
 from check_axioms import check  # noqa: E402
+from write_gate_receipt import validate_manifest, VALID_STAGES  # noqa: E402
 
 MATHLIB = "d13f23b723b8a846827a245b89c10fc7d3f11612"
 FAKE_LAKE = f'''import Lake
@@ -51,6 +52,31 @@ def git_fixture(where: Path, files: dict[str, str]) -> tuple[str, str, dict[str,
     sha = run("git", "rev-parse", "HEAD", cwd=where)
     hashes = {name: run("git", "hash-object", name, cwd=where) for name in files}
     return sha, str(where), hashes
+
+
+class BuildReceiptTests(unittest.TestCase):
+    def test_manifest_lock(self):
+        rev = MATHLIB
+        validate_manifest({"packages": [
+            {"name": "mathlib", "type": "git", "rev": rev},
+            {"name": "example", "type": "git", "rev": "a" * 40},
+        ]}, rev)
+        with self.assertRaises(ValueError):
+            validate_manifest({"packages": [{"name": "mathlib", "rev": "b" * 40}]}, rev)
+        with self.assertRaises(ValueError):
+            validate_manifest({"packages": [{"name": "mathlib", "rev": rev, "type": "git"},
+                                             {"name": "bad", "type": "git"}]}, rev)
+        with self.assertRaises(ValueError):
+            validate_manifest({"packages": []}, rev)
+
+    def test_stages_and_boot_order(self):
+        self.assertEqual(VALID_STAGES, {"oai", "zeta", "smoke", "axioms", "full"})
+        workflow = (ROOT / ".github/workflows/integration-manual.yml").read_text()
+        self.assertIn("lake-package-directory: .bridge/vendor/oai/lean", workflow)
+        self.assertIn("use-github-cache: false", workflow)
+        self.assertIn("use-mathlib-cache: false", workflow)
+        self.assertIn(".bridge/gates/*.json", workflow)
+        self.assertIn(".bridge/logs/*.log", workflow)
 
 
 class LockTests(unittest.TestCase):
