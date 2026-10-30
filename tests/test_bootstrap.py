@@ -168,7 +168,7 @@ class AxiomTests(unittest.TestCase):
 
     def test_zero_stage_exact_two_theorems(self):
         self.assertEqual(len(TARGETS["zero"]), 2)
-        lines = "\\n".join(
+        lines = "\n".join(
             f"'{name}' depends on axioms: [propext, Classical.choice, Quot.sound]"
             for name in TARGETS["zero"]
         )
@@ -176,7 +176,7 @@ class AxiomTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check(lines.splitlines()[0], "zero")
         with self.assertRaises(ValueError):
-            check(lines + "\\n" + lines.splitlines()[0], "zero")
+            check(lines + "\n" + lines.splitlines()[0], "zero")
         with self.assertRaises(ValueError):
             check(lines.replace("propext", "sorryAx"), "zero")
 
