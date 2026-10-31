@@ -45,7 +45,7 @@ def fixture(root: Path) -> dict:
 
 
 class OverlayAdversarialTests(unittest.TestCase):
-    def test_real_manifest_pins_four_original_and_four_results(self):
+    def test_real_manifest_pins_five_original_and_five_results(self):
         data = json.loads((ROOT / MANIFEST).read_text(encoding="utf-8"))
         self.assertEqual(data["source_commit"], "ebbd787202ce2c67518946fc642af12ff009eaa6")
         self.assertEqual(data["mathlib_commit"], "d13f23b723b8a846827a245b89c10fc7d3f11612")
@@ -54,7 +54,12 @@ class OverlayAdversarialTests(unittest.TestCase):
             "Zeta23/WeilEF/GammaRBracket.lean",
             "Zeta23/Analytic/RectangleLogDeriv.lean",
             "Zeta23/CCM/DictionaryArchDiagonal.lean",
+            "Zeta23/WeilEF/Landau.lean",
         })
+        landau = next(f for f in data["files"] if f["path"] == "Zeta23/WeilEF/Landau.lean")
+        self.assertEqual(landau["source_git_blob"], "5b6d356d64a6e7a1bf6bc0e98406d3dfe5a7f4d6")
+        self.assertEqual(landau["patched_git_blob"], "1692d85e2f7a65103ed89f2febde155c6121c62c")
+        self.assertEqual(len(landau["replacements"]), 3)
         self.assertTrue(all(f["source_git_blob"] != f["patched_git_blob"] for f in data["files"]))
         for f in data["files"]:
             for replacement in f["replacements"]:

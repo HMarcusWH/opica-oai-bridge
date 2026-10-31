@@ -9,13 +9,14 @@ anchor and count, and the Git blob SHA of the expected result. Everything
 else is linked unchanged. The active source link `Zeta23/` points to the
 overlay, while `Zeta23.lean` still points to the original facade.
 
-Initial four fixes:
+Reviewed fixes (first four native-compiled in run #41155532561; fifth pending):
 
 1. `StrongPNTPrefix`: use `Finset.prod_le_prod₀`, the nonnegative product
    theorem in the pinned Mathlib, instead of `Finset.prod_le_prod`.
 2. `GammaRBracket`: use function-form `logDeriv_fun_mul`.
 3. `RectangleLogDeriv`: use function-form `logDeriv_fun_mul`.
 4. `DictionaryArchDiagonal`: use `logDeriv_fun_mul` and `logDeriv_fun_div`.
+5. `WeilEF/Landau`: use `logDeriv_fun_prod`, `Finset.prod_le_prod₀`, and `Finset.prod_le_one₀`.
 
 These substitutions adjust tactic lemma selection, not theorem declarations.
 The expected resulting blobs were computed from the exact pinned source;

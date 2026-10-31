@@ -3,14 +3,18 @@
   "source_commit": "ebbd787202ce2c67518946fc642af12ff009eaa6",
   "lean_toolchain": "leanprover/lean4:v4.34.1",
   "mathlib_commit": "d13f23b723b8a846827a245b89c10fc7d3f11612",
-  "purpose": "Tactic/theorem-name migration only: four original Zeta23 modules on pinned Mathlib",
+  "purpose": "Lean 4.34 tactic/lemma-name migration: five source-pinned Zeta23 modules",
   "files": [
     {
       "path": "Zeta23/FromPNTPlus/StrongPNTPrefix.lean",
       "source_git_blob": "3edad168ab314e283c54b58da800fcc076946b18",
       "patched_git_blob": "c92b0ee0e7f3572de6d6b5aac320954fa7e9cb93",
       "replacements": [
-        {"before": "apply Finset.prod_le_prod", "after": "apply Finset.prod_le_prod₀", "count": 2}
+        {
+          "before": "apply Finset.prod_le_prod",
+          "after": "apply Finset.prod_le_prod₀",
+          "count": 2
+        }
       ]
     },
     {
@@ -18,7 +22,11 @@
       "source_git_blob": "48eba58762cccfc47ac06b7af5c386b68fdba20c",
       "patched_git_blob": "0b1a07cba5e5766d5deb9a7a87465b202fda9d1f",
       "replacements": [
-        {"before": "logDeriv_mul s hpow_ne", "after": "logDeriv_fun_mul s hpow_ne", "count": 1}
+        {
+          "before": "logDeriv_mul s hpow_ne",
+          "after": "logDeriv_fun_mul s hpow_ne",
+          "count": 1
+        }
       ]
     },
     {
@@ -26,7 +34,11 @@
       "source_git_blob": "db30df619c414827f45a20b95fd173edd3600ee1",
       "patched_git_blob": "de3812e50bfee530433f06e2a18cb30ff158f577",
       "replacements": [
-        {"before": "logDeriv_mul (f :=", "after": "logDeriv_fun_mul (f :=", "count": 2}
+        {
+          "before": "logDeriv_mul (f :=",
+          "after": "logDeriv_fun_mul (f :=",
+          "count": 2
+        }
       ]
     },
     {
@@ -34,8 +46,38 @@
       "source_git_blob": "69cd6e05b8e0ee36c7427e3fe853c1d29165d367",
       "patched_git_blob": "e6927a438f3daa3c6c2d5034c8921d2fe895303a",
       "replacements": [
-        {"before": "logDeriv_mul q", "after": "logDeriv_fun_mul q", "count": 3},
-        {"before": "logDeriv_div q", "after": "logDeriv_fun_div q", "count": 1}
+        {
+          "before": "logDeriv_mul q",
+          "after": "logDeriv_fun_mul q",
+          "count": 3
+        },
+        {
+          "before": "logDeriv_div q",
+          "after": "logDeriv_fun_div q",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "Zeta23/WeilEF/Landau.lean",
+      "source_git_blob": "5b6d356d64a6e7a1bf6bc0e98406d3dfe5a7f4d6",
+      "patched_git_blob": "1692d85e2f7a65103ed89f2febde155c6121c62c",
+      "replacements": [
+        {
+          "before": "logDeriv_prod (f :=",
+          "after": "logDeriv_fun_prod (f :=",
+          "count": 1
+        },
+        {
+          "before": "Finset.prod_le_prod (fun ρ",
+          "after": "Finset.prod_le_prod₀ (fun ρ",
+          "count": 1
+        },
+        {
+          "before": "Finset.prod_le_one (fun ρ",
+          "after": "Finset.prod_le_one₀ (fun ρ",
+          "count": 1
+        }
       ]
     }
   ]
