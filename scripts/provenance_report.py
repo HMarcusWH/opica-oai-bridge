@@ -30,6 +30,12 @@ def main() -> None:
         "target_zeta23": d["zeta23"]["commit"],
         "target_mathlib": d["workspace_mathlib"],
         "lake_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest() if manifest.exists() else None,
+        "zeta23_compat_manifest_sha256": hashlib.sha256(
+            (ROOT / "compat/zeta23/overlay.json").read_bytes()).hexdigest()
+            if (ROOT / "compat/zeta23/overlay.json").exists() else None,
+        "zeta23_compat_evidence_sha256": hashlib.sha256(
+            (ROOT / ".bridge/overlays/zeta23/evidence.json").read_bytes()).hexdigest()
+            if (ROOT / ".bridge/overlays/zeta23/evidence.json").exists() else None,
         "compiler_success": "NOT_ESTABLISHED_BY_THIS_REPORT",
         "mathematical_acceptance": "NOT_ESTABLISHED_BY_THIS_REPORT",
     }

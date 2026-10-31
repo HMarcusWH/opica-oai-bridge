@@ -18,6 +18,7 @@ from prepare_workspace import (  # noqa: E402
 )
 from verify_lock import read_and_validate, validate_lock  # noqa: E402
 from check_axioms import check  # noqa: E402
+from apply_zeta23_overlay import git_blob, prepare_overlay  # noqa: E402
 from write_gate_receipt import validate_manifest, VALID_STAGES  # noqa: E402
 from verify_resolution import check_resolution  # noqa: E402
 
@@ -107,12 +108,34 @@ class StagedResolutionTests(unittest.TestCase):
             prep = root / ".bridge/prepare-evidence.json"
             prep.parent.mkdir(parents=True)
             lock = read_and_validate(root)
+            fake_zeta_dir = root / ".bridge/vendor/zeta23/Zeta23/CCM"
+            fake_zeta_dir.mkdir(parents=True)
+            fake_source = fake_zeta_dir / "A.lean"
+            fake_source.write_text("-- source file\n")
+            fake_raw = fake_source.read_bytes()
+            fake_patched = fake_raw.replace(b"source", b"overlay")
+            compat = root / "compat/zeta23/overlay.json"
+            compat.parent.mkdir(parents=True)
+            compat.write_text(json.dumps({
+                "schema": "OPICA_OAI_ZETA23_COMPAT_OVERLAY_V1",
+                "source_commit": lock["zeta23"]["commit"],
+                "lean_toolchain": lock["lean_toolchain"],
+                "mathlib_commit": MATHLIB,
+                "files": [{
+                    "path": "Zeta23/CCM/A.lean",
+                    "source_git_blob": git_blob(fake_raw),
+                    "patched_git_blob": git_blob(fake_patched),
+                    "replacements": [{"before": "source", "after": "overlay", "count": 1}],
+                }],
+            }))
+            compat_evidence = prepare_overlay(root, lock)
             prep.write_text(json.dumps({
                 "schema": "OPICA_OAI_PREPARE_EVIDENCE_V1",
                 "oai_head": lock["oai"]["commit"],
                 "zeta23_head": lock["zeta23"]["commit"],
                 "mathlib_target": MATHLIB,
                 "generated_lake_sha256": hashlib.sha256(lake_path.read_bytes()).hexdigest(),
+                "compat_manifest_sha256": compat_evidence["manifest_sha256"],
             }))
             manifest = root / "lake-manifest.json"
             manifest.write_text(json.dumps({"packages": [
@@ -192,13 +215,29 @@ class ComposeTests(unittest.TestCase):
             run("git", "clone", "-q", zeta_url, str(vendor / "zeta23"), cwd=base)
             data = {"oai": {"repo": oai_url, "commit": oai_sha, "lakefile_blob": oai_hash["lean/lakefile.lean"]},
                     "zeta23": {"repo": zeta_url, "commit": zeta_sha, "lakefile_blob": zeta_hash["lakefile.toml"]},
-                    "workspace_mathlib": MATHLIB}
+                    "workspace_mathlib": MATHLIB, "lean_toolchain": "leanprover/lean4:v4.34.1"}
+            pristine = (vendor / "zeta23/Zeta23/OPICARound4/PrimeDiscrepancyIntegral.lean").read_bytes()
+            patched = pristine.replace(b"Zeta fixture", b"Zeta fixture patched")
+            (root / "compat/zeta23/overlay.json").write_text(json.dumps({
+                "schema": "OPICA_OAI_ZETA23_COMPAT_OVERLAY_V1",
+                "source_commit": zeta_sha, "mathlib_commit": MATHLIB,
+                "lean_toolchain": "leanprover/lean4:v4.34.1",
+                "files": [{
+                    "path": "Zeta23/OPICARound4/PrimeDiscrepancyIntegral.lean",
+                    "source_git_blob": git_blob(pristine), "patched_git_blob": git_blob(patched),
+                    "replacements": [{"before": "Zeta fixture", "after": "Zeta fixture patched", "count": 1}],
+                }],
+            }))
             a = prepare(root, data, offline=True)
             b = prepare(root, data, offline=True)
             self.assertEqual(a, b)
             self.assertEqual((root / "OAI").resolve(), (vendor / "oai/lean/OAI").resolve())
             self.assertTrue((root / "lakefile.lean").exists())
             self.assertFalse(a["lean_compiled"])
+            self.assertEqual(a["compat_patched_modules"], 1)
+            self.assertEqual((root / "Zeta23/OPICARound4/PrimeDiscrepancyIntegral.lean").read_bytes(), patched)
+            self.assertFalse((root / "Zeta23/OPICARound4/PrimeDiscrepancyIntegral.lean").is_symlink())
+            self.assertEqual((vendor / "zeta23/Zeta23/OPICARound4/PrimeDiscrepancyIntegral.lean").read_bytes(), pristine)
             (root / "lakefile.lean").write_text("tampered!", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "drift"):
                 prepare(root, data, offline=True)
