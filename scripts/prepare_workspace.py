@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from verify_lock import ROOT, read_and_validate
+from apply_zeta23_overlay import prepare_overlay
 
 VENDOR_DIRS = {"oai": Path(".bridge/vendor/oai"), "zeta23": Path(".bridge/vendor/zeta23")}
 REQUIRED_MARKERS = (
@@ -113,9 +114,15 @@ def make_links(root: Path) -> None:
         "OAI.lean": ".bridge/vendor/oai/lean/OAI.lean",
         "ComparatorChallenges": ".bridge/vendor/oai/lean/ComparatorChallenges",
         "patches": ".bridge/vendor/oai/lean/patches",
-        "Zeta23": ".bridge/vendor/zeta23/Zeta23",
+        "Zeta23": ".bridge/overlays/zeta23/Zeta23",
         "Zeta23.lean": ".bridge/vendor/zeta23/Zeta23.lean",
     }
+    # Upgrade a previous, verified pristine link to the reviewed overlay link;
+    # refuse any other symlink target or a real Zeta23 directory.
+    link = root / "Zeta23"
+    old_target = root / ".bridge/vendor/zeta23/Zeta23"
+    if link.is_symlink() and link.resolve() == old_target.resolve():
+        link.unlink()
     for name, path in links.items():
         relative_link(root, name, path)
 
@@ -133,6 +140,7 @@ def prepare(root: Path, data: dict, offline: bool = False) -> dict:
     # No patch to the mathematical source can be applied by this bootstrap.
     for patch in sorted((root / "compat/zeta23").glob("*.patch")):
         raise RuntimeError(f"Unreviewed Zeta23 overlay {patch.name}: add a separate audited patch procedure")
+    overlay_evidence = prepare_overlay(root, data)
     make_links(root)
     lake = render_lakefile(oai_lake.read_text(encoding="utf-8"), data["workspace_mathlib"])
     lake_path = root / "lakefile.lean"
@@ -147,7 +155,9 @@ def prepare(root: Path, data: dict, offline: bool = False) -> dict:
         "zeta23_head": data["zeta23"]["commit"],
         "mathlib_target": data["workspace_mathlib"],
         "generated_lake_sha256": hashlib.sha256(lake.encode()).hexdigest(),
-        "source_mode": "PINNED_SOURCE_COMPOSITION",
+        "source_mode": "PINNED_SOURCE_COMPOSITION_REVIEWED_ZETA23_OVERLAY",
+        "compat_manifest_sha256": overlay_evidence["manifest_sha256"],
+        "compat_patched_modules": len(overlay_evidence["files"]),
     }
     state_path = root / ".bridge/prepare-evidence.json"
     state_path.parent.mkdir(parents=True, exist_ok=True)

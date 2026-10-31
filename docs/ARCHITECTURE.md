@@ -25,8 +25,11 @@ The upstream `require mathlib` must match the locked `d13f23...` revision.
 Unexpected changes **stop** preparation rather than getting guessed around.
 
 This mode incorporates both complete source trees but leaves them as Git
-checkouts. The bridge generates links, not copies of mathematical modules.
-It remains a hypothesis about build compatibility until native `lake` gates pass.
+checkouts. OAI remains a direct link to the pristine original. Zeta23 is a
+**generated reviewed compatibility overlay**: unmodified source files link
+back to the pristine, unchanged checkout; only four precisely audited files
+are regular copies with their Lean 4.34 proof-tactic name migrations. It remains
+a hypothesis about Zeta23 build compatibility until native `lake` gates pass.
 
 ## 2. File ownership
 
@@ -42,7 +45,10 @@ opica-oai-bridge/
   OAI.lean -> .bridge/vendor/oai/lean/OAI.lean
   ComparatorChallenges/ -> .bridge/vendor/oai/lean/ComparatorChallenges
   patches/ -> .bridge/vendor/oai/lean/patches
-  Zeta23/ -> .bridge/vendor/zeta23/Zeta23
+  Zeta23/ -> .bridge/overlays/zeta23/Zeta23
+  .bridge/overlays/zeta23/Zeta23/  # links + four verified patched files
+  .bridge/overlays/zeta23/evidence.json
+  compat/zeta23/overlay.json       # original SHA + patched SHA + exact edits
   Zeta23.lean -> .bridge/vendor/zeta23/Zeta23.lean
   OPICAOAI/Smoke.lean             # first genuine dual-import theorem
   OPICAOAI/PrintAxioms.lean       # permitted-axiom audit
@@ -65,8 +71,9 @@ is retained for provenance but not evaluated as a competing root manifest.
 
 Lean is **4.34.1** for the entire build. Zeta23 at the pinned PR #298 revision
 was authored for **4.33.0-rc2** and a different Mathlib. All compiler and
-library repairs must occur in an independent compatibility overlay, with a
-complete diff review, before M2 can pass. No fallback to unproved theorem
+library repairs occur in the separately reviewed, source-fingerprinted
+compatibility overlay, not in the original source checkout, and M2 must
+recompile all imported modules before it can pass. No fallback to unproved theorem
 constants is permitted. If compatibility is too invasive, a separate Zeta23
 compatibility branch can replace the local overlay, but must be pinned to a
 new exact SHA and preserve theorem types and axiom dependencies.
@@ -75,7 +82,10 @@ new exact SHA and preserve theorem types and axiom dependencies.
 
 The preparation procedure checks full 40-character commits, exact remotes,
 clean tracked source trees, original `lakefile.lean` and `lakefile.toml` Git
-blob hashes, expected OAI patch hooks, toolchain pin and Mathlib pin. It fails
+blob hashes, expected OAI patch hooks, toolchain pin and Mathlib pin.
+Every reviewed compatibility module additionally checks the *original and
+resulting Git blob SHA*, and the generator validates each untouched linked
+source file on every invocation. The manifest SHA is included in native receipts. It fails
 on unknown source revisions or hand-edited generated Lake code.
 
 The verification report separately records observed source checkouts,

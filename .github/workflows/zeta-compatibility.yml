@@ -1,15 +1,20 @@
 name: M2 Zeta23 Lean 4.34 compatibility diagnostic
 on:
-  # Launch exactly one M2 diagnostic when this workflow is installed on main.
+  # Run the reviewed compatibility branch before merge, and on main after merge.
+  # Paths exclude unrelated documentation changes and avoid unbounded CI fanout.
   push:
-    branches: [main]
+    branches: [main, ci/zeta23-compat-overlay-v1]
     paths:
       - '.github/workflows/zeta-compatibility.yml'
+      - 'compat/zeta23/overlay.json'
+      - 'scripts/apply_zeta23_overlay.py'
+      - 'scripts/prepare_workspace.py'
+      - 'scripts/verify_resolution.py'
+      - 'scripts/write_gate_receipt.py'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  # Do not compete with the existing long-running OAI proof check.
   group: full-bridge-build
   cancel-in-progress: false
 jobs:
@@ -20,11 +25,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Verify original OAI and Zeta23 commits and compose exact workspace
+      - name: Verify original source pins and generate exact reviewed overlay
         run: |
           python3 scripts/verify_lock.py
           python3 scripts/prepare_workspace.py
-      - name: Install the shared Lean 4.34.1 toolchain
+          python3 -m unittest discover -s tests -v
+      - name: Install shared Lean 4.34.1 toolchain
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: .bridge/vendor/oai/lean
@@ -34,24 +40,25 @@ jobs:
           build: false
           test: false
           lint: false
-      - name: Resolve the locked OAI dependency graph and retain original patches
+      - name: Resolve 42 pinned dependencies and verify source overlay
         run: timeout --signal=TERM --kill-after=60s 7200 bash scripts/build.sh resolve
       - name: Restore approved Mathlib cache
         run: timeout --signal=TERM --kill-after=60s 1500 bash scripts/build.sh cache
-      - name: Compile original Zeta23 Round4 prime discrepancy module in unified workspace
+      - name: Compile original Round4 prime discrepancy through the reviewed overlay
         env:
           BRIDGE_PRE_RESOLVED: '1'
         run: timeout --signal=TERM --kill-after=60s 10200 bash scripts/build.sh zeta
-      - name: Produce provenance on both success and failure
+      - name: Report provenance on success and failure
         if: always()
         run: python3 scripts/provenance_report.py || true
-      - name: Retain source-bound M2 diagnostics
+      - name: Archive source-bound source patches and native logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bridge-m2-zeta-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             .bridge/prepare-evidence.json
+            .bridge/overlays/zeta23/evidence.json
             .bridge/resolution-report.json
             .bridge/provenance-report.json
             .bridge/logs/*.log

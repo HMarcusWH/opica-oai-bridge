@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Lake resolution against pinned sources. Never assert proof acceptance."""
+"""Validate resolved Lake + the exact reviewed Zeta23 overlay, not a proof."""
 from __future__ import annotations
 import hashlib
 import json
@@ -8,9 +8,12 @@ from pathlib import Path
 from prepare_workspace import VENDOR_DIRS, assert_git_checkout
 from verify_lock import ROOT, read_and_validate
 from write_gate_receipt import validate_manifest
+from apply_zeta23_overlay import prepare_overlay
+
 
 def digest(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
+
 
 def check_resolution(*, root: Path = ROOT, verify_git: bool = True) -> dict:
     data = read_and_validate(root)
@@ -28,6 +31,9 @@ def check_resolution(*, root: Path = ROOT, verify_git: bool = True) -> dict:
     lake_path = root / "lakefile.lean"
     if digest(lake_path) != evidence.get("generated_lake_sha256"):
         raise ValueError("Generated Lake configuration changed after preparation")
+    overlay = prepare_overlay(root, data)
+    if evidence.get("compat_manifest_sha256") != overlay["manifest_sha256"]:
+        raise ValueError("Prepared Zeta23 overlay manifest was modified")
     manifest_path = root / "lake-manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     validate_manifest(manifest, data["workspace_mathlib"])
@@ -40,6 +46,8 @@ def check_resolution(*, root: Path = ROOT, verify_git: bool = True) -> dict:
         "source_lock_sha256": digest(root / "source-lock.json"),
         "generated_lake_sha256": digest(lake_path),
         "manifest_sha256": digest(manifest_path),
+        "zeta23_compat_manifest_sha256": overlay["manifest_sha256"],
+        "zeta23_patched_files": overlay["files"],
         "mathlib_commit": data["workspace_mathlib"],
         "oai_commit": data["oai"]["commit"],
         "zeta23_commit": data["zeta23"]["commit"],
@@ -48,12 +56,14 @@ def check_resolution(*, root: Path = ROOT, verify_git: bool = True) -> dict:
         "step4_proved": False,
     }
 
+
 def main() -> None:
     report = check_resolution()
     dest = ROOT / ".bridge/resolution-report.json"
     dest.parent.mkdir(exist_ok=True, parents=True)
     dest.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("DEPENDENCY RESOLUTION VALIDATED (not a proof):", json.dumps(report))
+
 
 if __name__ == "__main__":
     try:

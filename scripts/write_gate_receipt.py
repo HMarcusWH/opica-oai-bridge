@@ -15,6 +15,7 @@ from pathlib import Path
 
 from verify_lock import ROOT, read_and_validate
 from prepare_workspace import VENDOR_DIRS, assert_git_checkout
+from apply_zeta23_overlay import prepare_overlay
 
 VALID_STAGES = {"oai", "zeta", "smoke", "axioms", "full"}
 
@@ -55,6 +56,9 @@ def receipt(stage: str, *, root: Path = ROOT,
         raise ValueError("Source preparation evidence mismatch")
     for key, rel in VENDOR_DIRS.items():
         assert_git_checkout(root / rel, data[key]["commit"], data[key]["repo"])
+    overlay = prepare_overlay(root, data)
+    if evidence.get("compat_manifest_sha256") != overlay["manifest_sha256"]:
+        raise ValueError("Reviewed overlay drift from source preparation evidence")
     manifest_path = root / "lake-manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     validate_manifest(manifest, data["workspace_mathlib"])
@@ -69,6 +73,8 @@ def receipt(stage: str, *, root: Path = ROOT,
         "oai_commit": data["oai"]["commit"],
         "zeta23_commit": data["zeta23"]["commit"],
         "mathlib_commit": data["workspace_mathlib"],
+        "zeta23_compat_manifest_sha256": overlay["manifest_sha256"],
+        "zeta23_compat_files": overlay["files"],
         "lean_version": lean_version or tool_version("lean"),
         "lake_version": lake_version or tool_version("lake"),
         "github_run_id": os.environ.get("GITHUB_RUN_ID"),
